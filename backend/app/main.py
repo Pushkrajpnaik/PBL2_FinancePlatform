@@ -13,6 +13,7 @@ from app.api.routes import (
     prediction,
     simulation,
     news,
+    market,
 )
 from app.core.database import create_tables
 
@@ -47,14 +48,15 @@ app.include_router(tax.router,          prefix="/api/v1/tax",         tags=["Tax
 app.include_router(prediction.router,   prefix="/api/v1/prediction",  tags=["Prediction"])
 app.include_router(simulation.router,   prefix="/api/v1/simulation",  tags=["Simulation"])
 app.include_router(news.router,         prefix="/api/v1/news",        tags=["News"])
+app.include_router(market.router,       prefix="/api/v1/market",      tags=["Market Data"])
 
 @app.get("/", tags=["Health"])
 def root():
     return {
-        "app": settings.APP_NAME,
+        "app":     settings.APP_NAME,
         "version": settings.APP_VERSION,
-        "status": "running",
-        "docs": "/docs",
+        "status":  "running",
+        "docs":    "/docs",
     }
 
 @app.get("/health", tags=["Health"])
