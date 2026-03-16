@@ -1,0 +1,577 @@
+{
+  "timestamp": "2026-03-16T12:40:36.798417",
+  "summary": {
+    "total": 113,
+    "passed": 105,
+    "failed": 2,
+    "warnings": 6,
+    "score": 92.92
+  },
+  "details": [
+    {
+      "test": "Auth - Valid login returns token",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Auth - Wrong password",
+      "status": "WARN",
+      "detail": "Got no response"
+    },
+    {
+      "test": "Auth - Email validation",
+      "status": "WARN",
+      "detail": "Got no response"
+    },
+    {
+      "test": "Auth - Name validation",
+      "status": "WARN",
+      "detail": "Got 200"
+    },
+    {
+      "test": "Auth - Password validation",
+      "status": "WARN",
+      "detail": "Got 200"
+    },
+    {
+      "test": "Auth - Route protection",
+      "status": "WARN",
+      "detail": "Got no response"
+    },
+    {
+      "test": "Market - NIFTY50 valid range",
+      "status": "PASS",
+      "detail": "Rs 23116.75"
+    },
+    {
+      "test": "Market - SENSEX valid range",
+      "status": "PASS",
+      "detail": "Rs 74642.92"
+    },
+    {
+      "test": "Market - Gold price exists",
+      "status": "PASS",
+      "detail": "$5013.7"
+    },
+    {
+      "test": "Market - Crude oil valid range",
+      "status": "PASS",
+      "detail": "$99.07"
+    },
+    {
+      "test": "Market - USD/INR valid range",
+      "status": "PASS",
+      "detail": "Rs 92.32"
+    },
+    {
+      "test": "Market - Different periods = different data",
+      "status": "PASS",
+      "detail": "{'1mo': 20, '3mo': 30, '6mo': 30, '1y': 30}"
+    },
+    {
+      "test": "Market - Returns vary across periods",
+      "status": "PASS",
+      "detail": "[-138.1, -45.4, 3.7]"
+    },
+    {
+      "test": "Market - Valid regime detected",
+      "status": "PASS",
+      "detail": "Bear Market (79.8% conf)"
+    },
+    {
+      "test": "Market - Confidence valid range",
+      "status": "PASS",
+      "detail": "79.83%"
+    },
+    {
+      "test": "Market - Momentum matches Bear Market",
+      "status": "PASS",
+      "detail": "-9.83%"
+    },
+    {
+      "test": "Market - Macro USD/INR valid",
+      "status": "PASS",
+      "detail": "Rs 92.33"
+    },
+    {
+      "test": "FinBERT - War/Crash news",
+      "status": "PASS",
+      "detail": "Negative (score=-0.5596, model=FinBERT)"
+    },
+    {
+      "test": "FinBERT - GDP growth",
+      "status": "PASS",
+      "detail": "Positive (score=0.6575, model=FinBERT)"
+    },
+    {
+      "test": "FinBERT - Policy neutral",
+      "status": "PASS",
+      "detail": "Neutral (score=-0.0875, model=FinBERT)"
+    },
+    {
+      "test": "FinBERT - Market rally",
+      "status": "PASS",
+      "detail": "Positive (score=0.6315, model=FinBERT)"
+    },
+    {
+      "test": "FinBERT - Banking crisis",
+      "status": "PASS",
+      "detail": "Negative (score=-0.6730, model=FinBERT)"
+    },
+    {
+      "test": "FinBERT - Earnings beat",
+      "status": "PASS",
+      "detail": "Positive (score=0.6635, model=FinBERT)"
+    },
+    {
+      "test": "FinBERT - Regulatory positive",
+      "status": "PASS",
+      "detail": "Positive (score=0.1492, model=FinBERT)"
+    },
+    {
+      "test": "FinBERT - Market selloff",
+      "status": "PASS",
+      "detail": "Negative (score=-0.6511, model=FinBERT)"
+    },
+    {
+      "test": "FinBERT - Score diversity",
+      "status": "PASS",
+      "detail": "7 unique scores across 8 tests"
+    },
+    {
+      "test": "FinBERT - Detects multiple sentiments",
+      "status": "PASS",
+      "detail": "{'Negative', 'Positive', 'Neutral'}"
+    },
+    {
+      "test": "FinBERT - Overall accuracy",
+      "status": "PASS",
+      "detail": "100.0% (8/8)"
+    },
+    {
+      "test": "GeoRisk - War scenario",
+      "status": "PASS",
+      "detail": "Score=0.9, Level=Critical"
+    },
+    {
+      "test": "GeoRisk - Normal policy (should be low)",
+      "status": "PASS",
+      "detail": "Score=0.0, Level=Low"
+    },
+    {
+      "test": "GeoRisk - Geopolitical conflict",
+      "status": "PASS",
+      "detail": "Score=0.75, Level=Critical"
+    },
+    {
+      "test": "News - Live articles fetched",
+      "status": "PASS",
+      "detail": "39 articles"
+    },
+    {
+      "test": "ARIMA (6mo) - Current price valid",
+      "status": "PASS",
+      "detail": "Rs 23157.4"
+    },
+    {
+      "test": "ARIMA (6mo) - Prediction positive",
+      "status": "PASS",
+      "detail": "Rs 21569.10"
+    },
+    {
+      "test": "ARIMA (6mo) - Prediction reasonable",
+      "status": "PASS",
+      "detail": "-6.86% predicted return"
+    },
+    {
+      "test": "ARIMA (6mo) - Non-stationary",
+      "status": "WARN",
+      "detail": "p=0.3497 (need more data)"
+    },
+    {
+      "test": "ARIMA (6mo) - 30 predictions generated",
+      "status": "PASS",
+      "detail": "\u2713"
+    },
+    {
+      "test": "ARIMA (1y) - Current price valid",
+      "status": "PASS",
+      "detail": "Rs 23157.4"
+    },
+    {
+      "test": "ARIMA (1y) - Prediction positive",
+      "status": "PASS",
+      "detail": "Rs 23240.53"
+    },
+    {
+      "test": "ARIMA (1y) - Prediction reasonable",
+      "status": "PASS",
+      "detail": "0.36% predicted return"
+    },
+    {
+      "test": "ARIMA (1y) - Stationarity test",
+      "status": "PASS",
+      "detail": "p=0.0 (stationary)"
+    },
+    {
+      "test": "ARIMA (1y) - 30 predictions generated",
+      "status": "PASS",
+      "detail": "\u2713"
+    },
+    {
+      "test": "ARIMA (2y) - Current price valid",
+      "status": "PASS",
+      "detail": "Rs 23157.05"
+    },
+    {
+      "test": "ARIMA (2y) - Prediction positive",
+      "status": "PASS",
+      "detail": "Rs 23222.10"
+    },
+    {
+      "test": "ARIMA (2y) - Prediction reasonable",
+      "status": "PASS",
+      "detail": "0.28% predicted return"
+    },
+    {
+      "test": "ARIMA (2y) - Stationarity test",
+      "status": "PASS",
+      "detail": "p=0.0 (stationary)"
+    },
+    {
+      "test": "ARIMA (2y) - 30 predictions generated",
+      "status": "PASS",
+      "detail": "\u2713"
+    },
+    {
+      "test": "ARIMA - Periods give different predictions",
+      "status": "PASS",
+      "detail": "['6mo:-6.86%', '1y:0.36%', '2y:0.28%']"
+    },
+    {
+      "test": "XGBoost (1y) - Accuracy above random",
+      "status": "PASS",
+      "detail": "47.83%"
+    },
+    {
+      "test": "XGBoost (1y) - Probabilities sum ~100%",
+      "status": "PASS",
+      "detail": "UP=81.4% DOWN=18.6%"
+    },
+    {
+      "test": "XGBoost (1y) - Valid direction",
+      "status": "PASS",
+      "detail": "UP"
+    },
+    {
+      "test": "XGBoost (1y) - Feature importance populated",
+      "status": "PASS",
+      "detail": "Top: rsi"
+    },
+    {
+      "test": "XGBoost (1y) - Sufficient training data",
+      "status": "PASS",
+      "detail": "181 samples"
+    },
+    {
+      "test": "XGBoost (2y) - Accuracy above random",
+      "status": "PASS",
+      "detail": "56.84%"
+    },
+    {
+      "test": "XGBoost (2y) - Probabilities sum ~100%",
+      "status": "PASS",
+      "detail": "UP=67.8% DOWN=32.2%"
+    },
+    {
+      "test": "XGBoost (2y) - Valid direction",
+      "status": "PASS",
+      "detail": "UP"
+    },
+    {
+      "test": "XGBoost (2y) - Feature importance populated",
+      "status": "PASS",
+      "detail": "Top: volatility_20d"
+    },
+    {
+      "test": "XGBoost (2y) - Sufficient training data",
+      "status": "PASS",
+      "detail": "378 samples"
+    },
+    {
+      "test": "XGBoost - Feature importance varies across periods",
+      "status": "PASS",
+      "detail": "Model learns different patterns"
+    },
+    {
+      "test": "Signal - Valid signal generated",
+      "status": "PASS",
+      "detail": "'STRONG SELL'"
+    },
+    {
+      "test": "Signal - Score in valid range",
+      "status": "PASS",
+      "detail": "-3.301"
+    },
+    {
+      "test": "Signal - All 5 components present",
+      "status": "PASS",
+      "detail": "\u2713"
+    },
+    {
+      "test": "Signal - Geo risk valid range",
+      "status": "PASS",
+      "detail": "0.900"
+    },
+    {
+      "test": "Signal - Consistent with Bear Market",
+      "status": "PASS",
+      "detail": "STRONG SELL during Bear Market"
+    },
+    {
+      "test": "Portfolio (Conservative) - Weights sum 100%",
+      "status": "PASS",
+      "detail": "Sum=100.00%"
+    },
+    {
+      "test": "Portfolio (Conservative) - All weights positive",
+      "status": "PASS",
+      "detail": "\u2713"
+    },
+    {
+      "test": "Portfolio (Conservative) - Sharpe reasonable",
+      "status": "PASS",
+      "detail": "0.479"
+    },
+    {
+      "test": "Portfolio (Conservative) - Amounts sum to investment",
+      "status": "PASS",
+      "detail": "Rs 1,000,000"
+    },
+    {
+      "test": "Portfolio (Moderate) - Weights sum 100%",
+      "status": "PASS",
+      "detail": "Sum=100.00%"
+    },
+    {
+      "test": "Portfolio (Moderate) - All weights positive",
+      "status": "PASS",
+      "detail": "\u2713"
+    },
+    {
+      "test": "Portfolio (Moderate) - Sharpe reasonable",
+      "status": "PASS",
+      "detail": "0.574"
+    },
+    {
+      "test": "Portfolio (Moderate) - Amounts sum to investment",
+      "status": "PASS",
+      "detail": "Rs 1,000,000"
+    },
+    {
+      "test": "Portfolio (Aggressive) - Weights sum 100%",
+      "status": "PASS",
+      "detail": "Sum=100.00%"
+    },
+    {
+      "test": "Portfolio (Aggressive) - All weights positive",
+      "status": "PASS",
+      "detail": "\u2713"
+    },
+    {
+      "test": "Portfolio (Aggressive) - Sharpe reasonable",
+      "status": "PASS",
+      "detail": "0.543"
+    },
+    {
+      "test": "Portfolio (Aggressive) - Amounts sum to investment",
+      "status": "PASS",
+      "detail": "Rs 1,000,000"
+    },
+    {
+      "test": "Portfolio - Aggressive > Conservative return",
+      "status": "PASS",
+      "detail": "Aggr=9.42% > Cons=7.08%"
+    },
+    {
+      "test": "Portfolio - Methods give different Sharpe",
+      "status": "PASS",
+      "detail": "{'markowitz': 0.574, 'risk_parity': 0.57, 'cvar': 0.559}"
+    },
+    {
+      "test": "Portfolio - Dynamic uses real data",
+      "status": "PASS",
+      "detail": "100.0% real data"
+    },
+    {
+      "test": "Portfolio - Dynamic positive Sharpe",
+      "status": "PASS",
+      "detail": "1.546"
+    },
+    {
+      "test": "Portfolio - News signal applied",
+      "status": "PASS",
+      "detail": "\u2713"
+    },
+    {
+      "test": "Backtest - Sufficient real data",
+      "status": "PASS",
+      "detail": "739 trading days"
+    },
+    {
+      "test": "Backtest - buy_and_hold has results",
+      "status": "PASS",
+      "detail": "Return=11.34% Sharpe=0.396"
+    },
+    {
+      "test": "Backtest - momentum has results",
+      "status": "PASS",
+      "detail": "Return=6.21% Sharpe=-0.025"
+    },
+    {
+      "test": "Backtest - mean_reversion has results",
+      "status": "PASS",
+      "detail": "Return=11.25% Sharpe=0.322"
+    },
+    {
+      "test": "Backtest - regime_based has results",
+      "status": "PASS",
+      "detail": "Return=14.12% Sharpe=0.632"
+    },
+    {
+      "test": "Backtest - Regime beats buy-and-hold",
+      "status": "PASS",
+      "detail": "Regime=0.632 > BnH=0.396"
+    },
+    {
+      "test": "Backtest - Rankings ordered by Sharpe",
+      "status": "PASS",
+      "detail": "\u2713"
+    },
+    {
+      "test": "Backtest - buy_and_hold win rate valid",
+      "status": "PASS",
+      "detail": "55.0%"
+    },
+    {
+      "test": "Backtest - momentum win rate valid",
+      "status": "PASS",
+      "detail": "55.6%"
+    },
+    {
+      "test": "Backtest - mean_reversion win rate valid",
+      "status": "PASS",
+      "detail": "52.0%"
+    },
+    {
+      "test": "Backtest - regime_based win rate valid",
+      "status": "PASS",
+      "detail": "55.8%"
+    },
+    {
+      "test": "Tax - LTCG under Rs 1.25L = zero tax",
+      "status": "PASS",
+      "detail": "Gain=Rs50K < Rs1.25L exemption \u2192 Tax=0"
+    },
+    {
+      "test": "Tax - LTCG classification correct",
+      "status": "PASS",
+      "detail": "LTCG (Long Term Capital Gain)"
+    },
+    {
+      "test": "Tax - Long term flag correct",
+      "status": "PASS",
+      "detail": "holding_days=400 > 365"
+    },
+    {
+      "test": "Tax - LTCG rate 12.5% (Budget 2024)",
+      "status": "PASS",
+      "detail": "Rate=12.5%"
+    },
+    {
+      "test": "Tax - Base tax correct",
+      "status": "PASS",
+      "detail": "Rs 9375.0 (75000 \u00d7 12.5%)"
+    },
+    {
+      "test": "Tax - 4% cess correct",
+      "status": "PASS",
+      "detail": "Rs 375.0"
+    },
+    {
+      "test": "Tax - Total tax correct (Budget 2024)",
+      "status": "PASS",
+      "detail": "Rs 9750.0"
+    },
+    {
+      "test": "Tax - STCG classification correct",
+      "status": "PASS",
+      "detail": "STCG (Short Term Capital Gain)"
+    },
+    {
+      "test": "Tax - Short term flag correct",
+      "status": "PASS",
+      "detail": "holding_days=180 < 365"
+    },
+    {
+      "test": "Tax - STCG rate 15% correct",
+      "status": "PASS",
+      "detail": "15.0%"
+    },
+    {
+      "test": "Tax - STCG total tax correct",
+      "status": "PASS",
+      "detail": "Rs 15600.0"
+    },
+    {
+      "test": "Tax - Net proceeds formula correct",
+      "status": "PASS",
+      "detail": "Rs 184,400 = Sale - Tax"
+    },
+    {
+      "test": "Tax - Gold LTCG 12.5% (Budget 2024)",
+      "status": "PASS",
+      "detail": "12.5%"
+    },
+    {
+      "test": "Risk - Valid profile type",
+      "status": "PASS",
+      "detail": "Aggressive"
+    },
+    {
+      "test": "Risk - Score valid range",
+      "status": "PASS",
+      "detail": "68.46/100"
+    },
+    {
+      "test": "Risk - Allocation provided",
+      "status": "PASS",
+      "detail": "Total=100%"
+    },
+    {
+      "test": "Risk - Consistent score",
+      "status": "PASS",
+      "detail": "Score=68.46 (expected ~68.46)"
+    },
+    {
+      "test": "Risk - Correct profile type",
+      "status": "PASS",
+      "detail": "Aggressive"
+    },
+    {
+      "test": "Risk - Low answers = Conservative",
+      "status": "PASS",
+      "detail": "Score=17.69"
+    },
+    {
+      "test": "Monte Carlo (Conservative 5yr) - API failed",
+      "status": "FAIL",
+      "detail": "Tried /run and /monte-carlo \u2014 check your simulation route"
+    },
+    {
+      "test": "Monte Carlo (Aggressive 10yr) - API failed",
+      "status": "FAIL",
+      "detail": "Tried /run and /monte-carlo \u2014 check your simulation route"
+    }
+  ]
+}

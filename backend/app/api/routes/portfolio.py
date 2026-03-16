@@ -4,6 +4,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
 from app.models.user import User
 from app.models.risk_profile import RiskProfile
+from app.ml.portfolio.ensemble_optimizer import run_ensemble_optimization
 from app.schemas.portfolio import (
     PortfolioOptimizationRequest,
     OptimizationResult,
@@ -173,6 +174,80 @@ def get_my_portfolio(
         "portfolio":    result,
     }
 
+@router.get("/optimize/ensemble/auto")
+def ensemble_auto_portfolio(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Ensemble portfolio — combines ALL 4 optimization methods.
+    Weights automatically determined by market regime + news signal.
+    This is the most sophisticated optimization available.
+    """
+    profile = db.query(RiskProfile).filter(
+        RiskProfile.user_id == current_user.id
+    ).first()
+    if not profile:
+        raise HTTPException(
+            status_code=404,
+            detail="No risk profile found."
+        )
+
+    assets = get_assets_for_profile(profile.profile_type)
+
+    # Get regime
+    df = fetch_nifty50_history(period="3mo")
+    if df is not None and not df.empty:
+        regime = detect_market_regime_from_data(df)["regime"]
+    else:
+        regime = "Sideways/Neutral"
+
+    # Get news signal
+    cached_news = get_cached_news_sentiment()
+    news_signal = None
+    if cached_news:
+        news_signal = process_news_for_portfolio_signal(cached_news, regime)
+
+    result = run_ensemble_optimization(
+        assets=assets,
+        risk_profile=profile.profile_type,
+        regime=regime,
+        news_signal=news_signal,
+        investment_amount=1000000,
+    )
+
+    result["user_risk_profile"] = profile.profile_type
+    return result
+
+
+@router.post("/optimize/ensemble")
+def ensemble_portfolio(
+    request: PortfolioOptimizationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Ensemble portfolio with custom inputs.
+    Combines all 4 methods with regime-aware weighting.
+    """
+    assets = get_assets_for_profile(request.risk_profile)
+
+    df = fetch_nifty50_history(period="3mo")
+    regime = detect_market_regime_from_data(df)["regime"] if df is not None else "Sideways/Neutral"
+
+    cached_news = get_cached_news_sentiment()
+    news_signal = None
+    if cached_news:
+        news_signal = process_news_for_portfolio_signal(cached_news, regime)
+
+    return run_ensemble_optimization(
+        assets=assets,
+        risk_profile=request.risk_profile,
+        regime=regime,
+        news_signal=news_signal,
+        investment_amount=request.investment_amount,
+        investor_views=request.investor_views,
+    )
 
 # ─── POST routes after GET routes ─────────────────────────────────────────────
 
