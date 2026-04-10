@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ai-finance-backend
+    env: python
+    # We are specifying the backend directory as the root
+    rootDir: .
+    # Command Render runs to install dependencies
+    buildCommand: pip install -r requirements.txt
+    # Command Render runs to start the FastAPI server
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0 # You can change this to match your local Python version
+      # Add placeholders for any other environment variables your app needs
+      # - key: DATABASE_URL
+      #   sync: false
+      # - key: SECRET_KEY
+      #   sync: false
