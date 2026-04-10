@@ -99,7 +99,7 @@ export const marketAPI = {
   portfolioSignal: ()                => api.get('/market/portfolio-signal'),
   realRegime:      ()                => api.get('/market/regime/real'),
   popularFunds:    ()                => api.get('/market/mutual-funds/popular'),
-  searchFunds:     (q: string)       => api.get(`/market/mutual-funds/search?query=${q}`),
+  searchFunds:     (q: string)       => api.get(`/market/mutual-funds/search?query=${encodeURIComponent(q)}`),
   fundDetails:     (code: string)    => api.get(`/market/mutual-funds/${code}`),
 };
 

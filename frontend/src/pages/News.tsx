@@ -2,27 +2,130 @@ import React, { useEffect, useState } from 'react';
 import { marketAPI, newsAPI } from '../services/api';
 import { Newspaper, AlertTriangle, TrendingUp, TrendingDown, Globe, RefreshCw } from 'lucide-react';
 
+const normalizeSentiment = (value?: string) => {
+  const v = (value || '').toLowerCase();
+  if (v.includes('pos')) return 'Positive';
+  if (v.includes('neg')) return 'Negative';
+  return 'Neutral';
+};
+
+const getStakeholderImpact = (article: any) => {
+  const sentiment = normalizeSentiment(article?.sentiment);
+  const score = Number(article?.finbert_score ?? article?.compound_score ?? 0);
+  const confidence = Number(article?.finbert_confidence ?? 0);
+  const riskLevel = article?.risk_level?.level || 'Neutral';
+  const geoLevel = article?.geopolitical_risk?.level || 'Low';
+  const sectors = Array.isArray(article?.sectors_detected) ? article.sectors_detected : [];
+
+  const sectorText = sectors.length ? sectors.join(', ') : 'general market';
+  const scoreStrength = Math.abs(score);
+  const hasHighRisk = riskLevel === 'High' || geoLevel === 'Critical' || geoLevel === 'High';
+  const hasClearSignal = scoreStrength >= 0.2 && confidence >= 0.55;
+
+  if (hasHighRisk) {
+    return {
+      target: 'Investors & Owners',
+      why: `High risk signal from FinBERT in ${sectorText}; potential downside needs allocation and business exposure review.`,
+      finbertView: sentiment,
+    };
+  }
+
+  if (sentiment === 'Positive' && hasClearSignal) {
+    return {
+      target: 'Owners',
+      why: `FinBERT confidence is strong (${(confidence * 100).toFixed(0)}%) with positive tone in ${sectorText}, suggesting business momentum.`,
+      finbertView: 'Positive',
+    };
+  }
+
+  if (sentiment === 'Negative' && hasClearSignal) {
+    return {
+      target: 'Investors',
+      why: `FinBERT reads negative with strong conviction in ${sectorText}, which can pressure valuations and near-term returns.`,
+      finbertView: 'Negative',
+    };
+  }
+
+  return {
+    target: 'Investors & Owners',
+    why: `FinBERT sentiment is mixed/low-conviction for ${sectorText}; wait for confirmation before major decisions.`,
+    finbertView: 'Neutral',
+  };
+};
+
+const getAnalysisImpact = (analysis: any) => {
+  const sentiment = normalizeSentiment(analysis?.sentiment);
+  const score = Number(analysis?.finbert_score ?? 0);
+  const confidence = Number(analysis?.finbert_confidence ?? 0);
+  const riskLevel = analysis?.risk_level?.level || 'Neutral';
+  const geoLevel = analysis?.geopolitical_risk?.level || 'Low';
+  const sectors = Array.isArray(analysis?.sectors_detected) ? analysis.sectors_detected : [];
+  const sectorText = sectors.length ? sectors.join(', ') : 'general market';
+
+  if (riskLevel === 'High' || geoLevel === 'Critical' || geoLevel === 'High') {
+    return {
+      target: 'Investors & Owners',
+      why: `FinBERT flags elevated risk in ${sectorText}, so both portfolio positioning and business exposure need attention.`,
+      finbertView: sentiment,
+    };
+  }
+
+  if (sentiment === 'Positive' && Math.abs(score) >= 0.2 && confidence >= 0.55) {
+    return {
+      target: 'Owners',
+      why: `Positive FinBERT signal with decent confidence indicates potential business momentum and operating upside.`,
+      finbertView: 'Positive',
+    };
+  }
+
+  if (sentiment === 'Negative' && Math.abs(score) >= 0.2 && confidence >= 0.55) {
+    return {
+      target: 'Investors',
+      why: `Negative FinBERT signal with strong conviction can weigh on sentiment, valuations, and near-term investor returns.`,
+      finbertView: 'Negative',
+    };
+  }
+
+  return {
+    target: 'Investors & Owners',
+    why: `FinBERT is neutral or low conviction, so treat this as watchlist information until more confirmation appears.`,
+    finbertView: 'Neutral',
+  };
+};
+
+const getCached = (key: string) => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const setCached = (key: string, value: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // no-op
+  }
+};
+
 export default function News() {
-  const [sentiment,  setSentiment]  = useState<any>(null);
-  const [alerts,     setAlerts]     = useState<any>(null);
-  const [latest,     setLatest]     = useState<any>(null);
-  const [geoRisk,    setGeoRisk]    = useState<any>(null);
-  const [loading,    setLoading]    = useState(true);
+  const [sentiment,  setSentiment]  = useState<any>(() => getCached('news:sentiment'));
+  const [loading,    setLoading]    = useState<boolean>(() => !getCached('news:sentiment'));
   const [refreshing, setRefreshing] = useState(false);
   const [text,       setText]       = useState('');
   const [analysis,   setAnalysis]   = useState<any>(null);
 
   const fetchData = async (forceRefresh = false) => {
     try {
-      const [s, a, l, g] = await Promise.allSettled([
+      const [s] = await Promise.allSettled([
         marketAPI.liveNews(forceRefresh),
-        newsAPI.riskAlerts(),
-        newsAPI.latest('all'),
-        newsAPI.riskAlerts(),
       ]);
-      if (s.status === 'fulfilled') setSentiment(s.value.data);
-      if (a.status === 'fulfilled') setAlerts(a.value.data);
-      if (l.status === 'fulfilled') setLatest(l.value.data);
+      if (s.status === 'fulfilled') {
+        setSentiment(s.value.data);
+        setCached('news:sentiment', s.value.data);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -174,6 +277,10 @@ export default function News() {
         </div>
         {analysis && (
           <div className="mt-4 p-4 bg-slate-700/50 rounded-lg">
+            {(() => {
+              const impact = getAnalysisImpact(analysis);
+              return (
+                <>
             <div className="flex items-center gap-3">
               <span className="text-2xl">
                 {analysis.sentiment === 'Positive' ? '📈' : analysis.sentiment === 'Negative' ? '📉' : '➡️'}
@@ -199,6 +306,19 @@ export default function News() {
                 )}
               </div>
             </div>
+            <div className="mt-3 border-t border-slate-600/50 pt-3">
+              <p className="text-xs text-slate-300">
+                FinBERT: <span className={`font-medium ${
+                  impact.finbertView === 'Positive' ? 'text-green-400' :
+                  impact.finbertView === 'Negative' ? 'text-red-400' : 'text-yellow-400'
+                }`}>{impact.finbertView}</span>
+                {' '}for <span className="text-blue-300 font-medium">{impact.target}</span>
+              </p>
+              <p className="text-xs text-slate-400 mt-1">{impact.why}</p>
+            </div>
+                </>
+              );
+            })()}
           </div>
         )}
       </div>
@@ -222,12 +342,29 @@ export default function News() {
                   }
                 </div>
                 <div className="flex-1 min-w-0">
+                  {(() => {
+                    const impact = getStakeholderImpact(n);
+                    return (
+                      <>
                   <p className="text-white text-sm truncate">{n.title}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-slate-400 text-xs">{n.source}</p>
                     <span className="text-slate-600 text-xs">•</span>
                     <p className="text-slate-500 text-xs">{n.sectors_detected?.join(', ')}</p>
                   </div>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-slate-300">
+                      FinBERT: <span className={`font-medium ${
+                        impact.finbertView === 'Positive' ? 'text-green-400' :
+                        impact.finbertView === 'Negative' ? 'text-red-400' : 'text-yellow-400'
+                      }`}>{impact.finbertView}</span>
+                      {' '}for <span className="text-blue-300 font-medium">{impact.target}</span>
+                    </p>
+                    <p className="text-xs text-slate-400">{impact.why}</p>
+                  </div>
+                      </>
+                    );
+                  })()}
                 </div>
                 <div className="shrink-0 text-right">
                   <span className={`text-xs px-2 py-1 rounded ${

@@ -18,22 +18,18 @@ from app.ml.simulation.monte_carlo import (
 router = APIRouter()
 
 
-@router.post("/run", response_model=SimulationResponse)
-def run_simulation(
+def _run_simulation_logic(
     request: SimulationRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-):
+    db: Session,
+    current_user: User,
+) -> dict:
     """
-    Run Monte Carlo simulation with 10,000 scenarios.
-    Returns full probability distribution, VaR, CVaR,
-    and goal success probability.
+    Shared logic used by both /run and /monte-carlo endpoints.
     """
-
     if request.risk_profile not in RISK_PROFILE_ASSUMPTIONS:
         raise HTTPException(
             status_code=400,
-            detail="Invalid risk profile. Choose: Conservative, Moderate, or Aggressive",
+            detail=f"Invalid risk profile '{request.risk_profile}'. Choose: Conservative, Moderate, or Aggressive",
         )
 
     assumptions = RISK_PROFILE_ASSUMPTIONS[request.risk_profile]
@@ -60,6 +56,34 @@ def run_simulation(
     return results
 
 
+@router.post("/run", response_model=SimulationResponse)
+def run_simulation(
+    request: SimulationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Run Monte Carlo simulation with 10,000 scenarios.
+    Returns full probability distribution, VaR, CVaR,
+    and goal success probability.
+    """
+    return _run_simulation_logic(request, db, current_user)
+
+
+# ✅ FIX: Added /monte-carlo alias — frontend was calling this route (404 previously)
+@router.post("/monte-carlo", response_model=SimulationResponse)
+def monte_carlo_simulation(
+    request: SimulationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Alias for /run. Accepts the same request body and returns the same response.
+    Provided for frontend compatibility.
+    """
+    return _run_simulation_logic(request, db, current_user)
+
+
 @router.post("/quick")
 def quick_simulation(
     db: Session = Depends(get_db),
@@ -69,7 +93,6 @@ def quick_simulation(
     Runs a quick simulation using the user's saved risk profile.
     Uses default values: 10,000 invested, 5,000 SIP, 10 year horizon.
     """
-
     profile = db.query(RiskProfile).filter(
         RiskProfile.user_id == current_user.id
     ).first()

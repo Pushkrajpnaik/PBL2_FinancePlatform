@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { portfolioAPI, predictionAPI, marketAPI, riskAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import { PieChart as PieIcon, Zap, Brain, Shield } from 'lucide-react';
+import { PieChart as PieIcon, Zap, Brain, Shield, Wallet, RefreshCw, Search } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 
 const COLORS = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316'];
@@ -44,7 +44,139 @@ const PROFILE_STYLE: any = {
   Aggressive:   { text: 'text-red-400',    border: 'border-red-500/30',    bg: 'bg-red-500/5'    },
 };
 
+const DEFENSIVE_KW = ['bluechip', 'large cap', 'tax saver', 'elss', 'large cap fund'];
+const AGGRESSIVE_KW = ['small cap', 'mid-cap', 'mid cap', 'emerging', 'opportunities fund'];
+const BALANCED_KW = ['flexi', 'flexi cap'];
+
+type FundRow = { fund: any; score: number; reason: string };
+
+type RelatedFund = {
+  scheme_code: string;
+  scheme_name: string;
+  matchedQuery: string;
+  anchorName: string;
+};
+
+/** Search phrases derived from a recommended fund (AMC, name prefix, category). */
+function queriesFromRecommendedFund(fund: any): string[] {
+  const out: string[] = [];
+  const fh = String(fund.fund_house || '').trim();
+  if (fh) {
+    const w = fh.split(/\s+/);
+    if (w.length >= 2) out.push(w.slice(0, 2).join(' '));
+    else out.push(w[0]);
+  }
+  let name = String(fund.scheme_name || '');
+  name = name
+    .replace(/\s*-\s*Direct.*$/i, '')
+    .replace(/\s*-\s*Regular.*$/i, '')
+    .replace(/\s*(Growth|IDCW|Payout).*/i, '')
+    .trim();
+  const words = name.split(/\s+/).filter(x => x.length > 1 && !/^(direct|plan|fund)$/i.test(x));
+  if (words.length >= 2) out.push(words.slice(0, 2).join(' '));
+  const cat = name.match(/\b(large\s+cap|mid\s+cap|small\s+cap|flexi\s+cap|elss|tax\s+saver)\b/i);
+  if (cat) out.push(cat[0].replace(/\s+/g, ' '));
+  return [...new Set(out.map(s => s.trim()).filter(Boolean))].slice(0, 4);
+}
+
+async function discoverRelatedFunds(ranked: FundRow[]): Promise<RelatedFund[]> {
+  if (!ranked.length) return [];
+
+  const exclude = new Set(ranked.map(r => String(r.fund.scheme_code)));
+  const queue: { q: string; anchor: string }[] = [];
+  for (const row of ranked.slice(0, 5)) {
+    const anchor = String(row.fund.scheme_name || 'Recommendation');
+    for (const q of queriesFromRecommendedFund(row.fund)) {
+      queue.push({ q, anchor });
+    }
+  }
+
+  const seenQ = new Set<string>();
+  const ordered = queue.filter(({ q }) => {
+    if (seenQ.has(q)) return false;
+    seenQ.add(q);
+    return true;
+  }).slice(0, 10);
+
+  const out: RelatedFund[] = [];
+  const seenCodes = new Set<string>(exclude);
+
+  for (const { q, anchor } of ordered) {
+    try {
+      const res = await marketAPI.searchFunds(q);
+      const results = res.data?.results || [];
+      for (const item of results) {
+        const code = String(item.scheme_code);
+        if (seenCodes.has(code)) continue;
+        seenCodes.add(code);
+        out.push({
+          scheme_code: code,
+          scheme_name: String(item.scheme_name || ''),
+          matchedQuery: q,
+          anchorName: anchor,
+        });
+        if (out.length >= 16) return out;
+      }
+    } catch {
+      /* skip failed query */
+    }
+  }
+
+  return out;
+}
+
+function buildFundSuggestions(funds: any[], riskProfile: string, regime: string): FundRow[] {
+  const bearish = regime === 'Bear Market' || regime === 'High Volatility';
+  const bullish = regime === 'Bull Market' || regime === 'Recovery';
+
+  const scored = (funds || []).map((fund: any) => {
+    const name = String(fund.scheme_name || '').toLowerCase();
+    let score = 0;
+    const reasons: string[] = [];
+
+    const hasDef = DEFENSIVE_KW.some(k => name.includes(k));
+    const hasAgg = AGGRESSIVE_KW.some(k => name.includes(k));
+    const hasBal = BALANCED_KW.some(k => name.includes(k));
+
+    if (riskProfile === 'Conservative') {
+      if (hasDef) { score += 4; reasons.push('Large-cap / quality tilt'); }
+      if (hasAgg) { score -= 2; }
+      if (hasBal) { score += 1; reasons.push('Diversified flexi'); }
+    } else if (riskProfile === 'Aggressive') {
+      if (hasAgg) { score += 4; reasons.push('Higher growth / mid–small cap'); }
+      if (hasDef) { score += 0.5; }
+      if (hasBal) { score += 2; reasons.push('Flexi cap option'); }
+    } else {
+      if (hasBal) { score += 3; reasons.push('Balanced flexi'); }
+      if (hasDef) { score += 1.5; }
+      if (hasAgg) { score += 1.5; }
+    }
+
+    if (bearish) {
+      if (hasDef) { score += 2; reasons.push('Defensive in current regime'); }
+      if (hasAgg) { score -= 1; }
+    }
+    if (bullish && hasAgg) {
+      score += 1.5;
+      reasons.push('Regime supports growth sleeves');
+    }
+
+    const r1y = Number(fund.return_1y) || 0;
+    score += Math.min(1.5, Math.max(-0.5, r1y / 40));
+
+    let reason = reasons[0] || 'Fits a diversified core';
+    if (reasons.length > 1) reason = `${reasons[0]} · ${reasons[1]}`;
+
+    return { fund, score, reason };
+  });
+
+  return scored
+    .sort((a, b) => b.score - a.score || (Number(b.fund.return_1y) || 0) - (Number(a.fund.return_1y) || 0))
+    .slice(0, 6);
+}
+
 export default function Portfolio() {
+  const parseNumberInput = (value: string) => (value === '' ? '' : Number(value));
   const [investmentAmount, setInvestmentAmount] = useState(1000000);
   const [result,           setResult]           = useState<any>(null);
   const [dynamicResult,    setDynamic]           = useState<any>(null);
@@ -58,6 +190,10 @@ export default function Portfolio() {
   const [riskProfile,      setRiskProfile]       = useState('');
   const [riskScore,        setRiskScore]         = useState(0);
   const [loadingAuto,      setLoadingAuto]       = useState(true);
+  const [suggestedRows,    setSuggestedRows]     = useState<FundRow[]>([]);
+  const [relatedFunds,     setRelatedFunds]      = useState<RelatedFund[]>([]);
+  const [loadingFunds,     setLoadingFunds]      = useState(false);
+  const [loadingRelated,   setLoadingRelated]   = useState(false);
 
   useEffect(() => {
     const fetchAutoData = async () => {
@@ -88,6 +224,38 @@ export default function Portfolio() {
     };
     fetchAutoData();
   }, []);
+
+  const loadFundSuggestions = useCallback(async () => {
+    setLoadingFunds(true);
+    setLoadingRelated(false);
+    setRelatedFunds([]);
+    try {
+      const res = await marketAPI.popularFunds();
+      const funds = res.data?.funds || [];
+      const ranked = buildFundSuggestions(
+        funds,
+        riskProfile || 'Moderate',
+        regime || 'Sideways/Neutral',
+      );
+      setSuggestedRows(ranked);
+      setLoadingFunds(false);
+      setLoadingRelated(true);
+      const related = await discoverRelatedFunds(ranked);
+      setRelatedFunds(related);
+    } catch {
+      toast.error('Could not load fund suggestions');
+      setSuggestedRows([]);
+      setRelatedFunds([]);
+    } finally {
+      setLoadingFunds(false);
+      setLoadingRelated(false);
+    }
+  }, [riskProfile, regime]);
+
+  useEffect(() => {
+    if (loadingAuto || !riskProfile) return;
+    loadFundSuggestions();
+  }, [loadingAuto, riskProfile, regime, loadFundSuggestions]);
 
   const handleOptimize = async () => {
     setLoading(true);
@@ -136,9 +304,34 @@ export default function Portfolio() {
     }
   };
 
+  const normalizedAllocation = result
+    ? (() => {
+        const allocation = result.allocation || {};
+        if (Object.keys(allocation).length > 0) {
+          return Object.fromEntries(
+            Object.entries(allocation).map(([k, v]: any) => [k, Number(v) || 0]),
+          );
+        }
+        const allocated = result.allocated_amounts || {};
+        const total = Number(Object.values(allocated).reduce((sum: number, x: any) => sum + (Number(x) || 0), 0));
+        return Object.fromEntries(
+          Object.entries(allocated).map(([k, v]: any) => [k, total > 0 ? ((Number(v) || 0) / total) * 100 : 0]),
+        );
+      })()
+    : {};
+
+  const computedAllocatedAmounts = Object.fromEntries(
+    Object.entries(normalizedAllocation).map(([k, pct]: any) => [
+      k,
+      Math.round(((Number(pct) || 0) / 100) * (Number(investmentAmount) || 0)),
+    ]),
+  );
+
   const pieData = result
-    ? Object.entries(result.allocation || {}).map(([k, v]: any) => ({
-        name: k.replace(/_/g, ' '), value: v,
+    ? Object.entries(normalizedAllocation).map(([k, pct]: any) => ({
+        name: k.replace(/_/g, ' '),
+        percent: Number(pct) || 0,
+        amount: computedAllocatedAmounts[k] || 0,
       }))
     : [];
 
@@ -210,7 +403,7 @@ export default function Portfolio() {
               <div className="card">
                 <h3 className="font-semibold text-white mb-4">Investment Amount (₹)</h3>
                 <input type="number" className="input-field" value={investmentAmount}
-                  onChange={e => setInvestmentAmount(Number(e.target.value))} />
+                  onChange={e => setInvestmentAmount(parseNumberInput(e.target.value) as any)} />
                 <div className="mt-3 p-3 bg-slate-700/30 rounded-lg">
                   <p className="text-slate-400 text-sm">
                     Optimizing
@@ -235,6 +428,104 @@ export default function Portfolio() {
                   </button>
                 </div>
               </div>
+
+              {/* Suggested mutual funds */}
+              <div className="card border border-emerald-500/20">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="text-emerald-400 shrink-0" size={20} />
+                    <div>
+                      <h3 className="font-semibold text-white">Suggested mutual funds</h3>
+                      <p className="text-slate-500 text-xs mt-0.5">
+                        Ranked for your <span className={ps.text}>{riskProfile}</span> profile and{' '}
+                        <span className={rs.text}>{regime}</span> regime (Indian AMCs, live NAV where available).
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={loadFundSuggestions}
+                    disabled={loadingFunds || loadingRelated}
+                    className="btn-secondary shrink-0 flex items-center gap-1.5 text-xs py-2 px-3"
+                  >
+                    <RefreshCw size={14} className={loadingFunds || loadingRelated ? 'animate-spin' : ''} />
+                    Refresh
+                  </button>
+                </div>
+                {loadingFunds && suggestedRows.length === 0 ? (
+                  <p className="text-slate-500 text-sm animate-pulse">Loading fund suggestions…</p>
+                ) : suggestedRows.length === 0 ? (
+                  <p className="text-slate-500 text-sm">No suggestions available.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {suggestedRows.map(({ fund, reason }, i) => (
+                      <div
+                        key={`${fund.scheme_code}-${i}`}
+                        className="flex flex-wrap items-start justify-between gap-2 p-3 rounded-xl bg-slate-800/50 border border-slate-700/80"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-white text-sm font-medium truncate" title={fund.scheme_name}>
+                            {fund.scheme_name || 'Fund'}
+                          </p>
+                          <p className="text-slate-500 text-xs mt-0.5">
+                            Scheme {fund.scheme_code}
+                            {fund.fund_house ? ` · ${fund.fund_house}` : ''}
+                          </p>
+                          <p className="text-emerald-400/90 text-xs mt-1">{reason}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-slate-400 text-xs">1Y return</p>
+                          <p className="text-white font-mono text-sm">
+                            {fund.error ? '—' : `${Number(fund.return_1y ?? 0).toFixed(1)}%`}
+                          </p>
+                          <p className="text-slate-500 text-xs mt-0.5">
+                            Vol. {fund.error ? '—' : `${Number(fund.volatility ?? 0).toFixed(1)}%`}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-slate-600 text-[11px] mt-3">
+                  Illustrative only — not investment advice. Verify scheme details and consult a financial advisor.
+                </p>
+              </div>
+
+              {/* Related schemes from MF search (aligned with recommendations) */}
+              {suggestedRows.length > 0 && (
+                <div className="card border border-sky-500/15">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Search className="text-sky-400 shrink-0" size={18} />
+                    <div>
+                      <h3 className="font-semibold text-white text-sm">Possible schemes (same AMC / category)</h3>
+                      <p className="text-slate-500 text-xs mt-0.5">
+                        Pulled from live MF search using each top recommendation’s fund house and name keywords.
+                        Excludes schemes already listed above.
+                      </p>
+                    </div>
+                  </div>
+                  {loadingRelated && relatedFunds.length === 0 ? (
+                    <p className="text-slate-500 text-xs animate-pulse py-2">Finding related schemes…</p>
+                  ) : relatedFunds.length === 0 ? (
+                    <p className="text-slate-500 text-xs py-2">No extra matches from search (try Refresh).</p>
+                  ) : (
+                    <ul className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                      {relatedFunds.map((r) => (
+                        <li
+                          key={r.scheme_code}
+                          className="text-xs text-slate-300 border border-slate-700/60 rounded-lg px-3 py-2 bg-slate-800/40"
+                        >
+                          <span className="text-white font-medium">{r.scheme_name}</span>
+                          <span className="text-slate-500"> · {r.scheme_code}</span>
+                          <p className="text-slate-500 mt-0.5">
+                            Search “{r.matchedQuery}” · aligned with “{r.anchorName}”
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </>
           )}
 
@@ -244,11 +535,17 @@ export default function Portfolio() {
                 <h3 className="font-semibold text-white mb-4">Allocation Chart</h3>
                 <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" outerRadius={100} dataKey="value"
-                      label={({ name, value }) => `${name} ${value}%`} labelLine={false}>
+                    <Pie data={pieData} cx="50%" cy="50%" outerRadius={100} dataKey="amount"
+                      label={({ name, value }) => `${name} ₹${(Number(value || 0) / 100000).toFixed(1)}L`} labelLine={false}>
                       {pieData.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip
+                      formatter={(_: any, __: any, payload: any) => {
+                        const p = payload?.payload;
+                        if (!p) return ['—', ''];
+                        return [`₹${(p.amount || 0).toLocaleString('en-IN')} (${(p.percent || 0).toFixed(1)}%)`, p.name];
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -271,7 +568,7 @@ export default function Portfolio() {
                 </div>
                 <div className="pt-4 border-t border-slate-700">
                   <p className="text-slate-400 text-sm mb-2">Allocated Amounts</p>
-                  {result.allocated_amounts && Object.entries(result.allocated_amounts).map(([k, v]: any) => (
+                  {Object.entries(computedAllocatedAmounts).map(([k, v]: any) => (
                     <div key={k} className="flex justify-between text-sm mb-1">
                       <span className="text-slate-300 capitalize">{k.replace(/_/g, ' ')}</span>
                       <span className="text-white">₹{v.toLocaleString()}</span>
