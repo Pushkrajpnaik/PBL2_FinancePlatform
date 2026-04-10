@@ -202,7 +202,7 @@ export default function Tax() {
       {/* Header */}
       <div>
         <h1 className="font-display font-bold flex items-center gap-2"
-          style={{ fontSize: 24, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+          style={{ fontSize: 28, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
           <Receipt size={22} style={{ color: 'var(--red)' }} />
           Tax Optimizer
         </h1>

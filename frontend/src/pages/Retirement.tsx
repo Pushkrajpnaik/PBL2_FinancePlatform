@@ -76,7 +76,7 @@ export default function Retirement() {
       {/* Header */}
       <div>
         <h1 className="font-display font-bold flex items-center gap-2"
-          style={{ fontSize: 24, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+          style={{ fontSize: 28, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
           <Sunset size={22} style={{ color: 'var(--purple)' }} />
           Retirement Planner
         </h1>

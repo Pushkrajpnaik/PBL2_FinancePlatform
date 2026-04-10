@@ -185,7 +185,7 @@ export default function Dashboard() {
       {/* ── Header ─────────────────────────────────────────── */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="font-display font-bold" style={{ fontSize: 24, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+          <h1 className="font-display font-bold" style={{ fontSize: 28, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
             Welcome back, {user?.full_name?.split(' ')[0] || 'Investor'}
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>

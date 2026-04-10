@@ -54,8 +54,8 @@ export default function RiskProfile() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Shield className="text-blue-500" /> Risk Profile Assessment
+        <h1 className="font-display font-bold flex items-center gap-2" style={{ fontSize: 28, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            <Shield className="text-blue-500" /> Risk Profile Assessment
         </h1>
         <p className="text-slate-400 mt-1">Answer 10 questions to get your personalized risk profile</p>
       </div>

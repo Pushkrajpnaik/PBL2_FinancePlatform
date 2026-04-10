@@ -341,8 +341,8 @@ export default function Portfolio() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <PieIcon className="text-green-500" /> Portfolio Optimizer
+        <h1 className="font-display font-bold flex items-center gap-2" style={{ fontSize: 28, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            <PieIcon className="text-green-500" /> Portfolio Optimizer
         </h1>
         <p className="text-slate-400 mt-1">
           Fully automated — risk profile and method auto-detected

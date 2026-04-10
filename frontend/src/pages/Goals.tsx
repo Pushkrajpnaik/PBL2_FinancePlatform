@@ -144,8 +144,8 @@ export default function Goals() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Target className="text-yellow-500" /> Goal Planner
+        <h1 className="font-display font-bold flex items-center gap-2" style={{ fontSize: 28, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            <Target className="text-yellow-500" /> Goals Planner
         </h1>
         <p className="text-slate-400 mt-1">
           Monte Carlo simulation — returns auto-set from your risk profile

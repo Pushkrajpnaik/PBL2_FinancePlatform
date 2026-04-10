@@ -151,7 +151,7 @@ export default function News() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 className="font-display font-bold flex items-center gap-2" style={{ fontSize: 28, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
             <Newspaper className="text-blue-500" /> News Intelligence
           </h1>
           <p className="text-slate-400 mt-1">Live FinBERT sentiment analysis from Indian financial news</p>
